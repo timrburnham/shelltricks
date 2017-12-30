@@ -9,12 +9,16 @@ def print_dict(D, prefix=''):
 
     for k, v in D.items():
         if isinstance(v, dict):
-            new_prefix = '{}{}_'.format(prefix + k)
+            new_prefix = '{}{}_'.format(prefix, k)
             print_dict(v, new_prefix)
         else:
             print('export {}{}="{}"'.format(prefix, k, v))
 
 if __name__ == "__main__":
-    with open("hi.json") as f:
-        payload = json.load(f)
-        print_dict(payload, '')
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("FILE", help="file to open")
+    args = parser.parse_args()
+
+    with open(args.FILE) as f:
+        print_dict(json.load(f))
