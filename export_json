@@ -2,6 +2,7 @@
 # compatible with Python 2 or 3
 from __future__ import print_function
 import json
+import sys
 
 def print_dict(D, prefix=''):
     """Print JSON dictionaries as shell exports,
@@ -17,8 +18,15 @@ def print_dict(D, prefix=''):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument("FILE", help="file to open")
+    parser.add_argument("FILE",
+                        nargs="?",
+                        default="-",
+                        help="json file name, omit to pipe from stdin")
     args = parser.parse_args()
 
-    with open(args.FILE) as f:
-        print_dict(json.load(f))
+    if args.FILE == '-':
+        txt = sys.stdin.read()
+        print_dict(json.loads(txt))
+    else:
+        with open(args.FILE) as f:
+            print_dict(json.load(f))
