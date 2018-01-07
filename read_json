@@ -1,0 +1,77 @@
+# Export json file into environment.
+#
+# Should work in Bash or KSH93, Python 2 or 3.
+# POSIX shells cannot export arrays, so json list
+# values will only be usable in immediate environment.
+#
+# Goes to a lot of trouble to avoid eval --
+# export_json is cleaner, but must eval arbitrary code!
+#
+# Child elements are separated with _ like so:
+#   { "parent": { "child": 2 } }
+# becomes:
+#   export parent_child=2
+#
+# Subshells cannot affect parent environment, so source this:
+# . read_json file.json
+
+if [[ -z "$1" ]]; then
+    echo "No JSON file specified."
+    return 2
+fi
+
+if [[ ! -e "$1" ]]; then
+    echo "Specified file not found."
+    return 4
+fi
+
+if [[ -n "$BASH_VERSION" ]]; then
+    readopts='-ra'
+elif [[ -n "$KSH_VERSION" ]]; then
+    readopts='-rA'
+else
+    echo "Only runs in Bash or KSH93."
+    exit 8
+fi
+
+# Some unfortunate OS do not support process substitution
+tmp_file=/tmp/$1.$$
+mkfifo $tmp_file
+
+python -c "
+from __future__ import print_function
+import json
+
+rs=chr(30) #record separator
+gs=chr(29) #group separator
+
+def print_dict(obj, prefix=''):
+    if isinstance(obj, dict):
+		for k, v in obj.items():
+			if isinstance(v, (dict, list)):
+				new_prefix = '{}{}_'.format(prefix, k)
+				print_dict(v, new_prefix)
+			else:
+				print('{}{}{}{}'.format(prefix, k, rs, v))
+    if isinstance(obj, list):
+        if isinstance(obj[0], (dict, list)):
+            for idx, v in enumerate(obj):
+                new_prefix = '{}{}_'.format(prefix, idx)
+                print_dict(v, new_prefix)
+        else:
+            print('{}ARRAY{}{}{}LIST' \
+                  .format(prefix, rs, gs.join(str(x) for x in obj), rs))
+
+with open('$1') as f:
+    print_dict(json.load(f))
+" >$tmp_file &
+
+while IFS=$'\x1e' read var val type; do
+    if [[ "$type" == LIST ]]; then
+        IFS=$'\x1d' read -d '' "$readopts" "$var" <<<$val
+    else
+        typeset -x "$var"="$val"
+    fi
+done <$tmp_file
+
+rm -f $tmp_file

@@ -1,32 +1,53 @@
 #!/usr/bin/env python
+"""Load JSON from file or stdin, create export statements for shell.
+
+Cannot affect parent environment, so eval this output.
+It is unsafe to eval unknown statements, so only use
+this on known json files. read_json script avoids eval.
+
+examples:
+  $ eval `export_json file.json`
+  $ eval `curl http://some.url | export_json`
+"""
 # compatible with Python 2 or 3
 from __future__ import print_function
 import json
 import sys
 
-def print_dict(D, prefix=''):
-    """Print JSON dictionaries as shell exports,
-    building nested key path as name."""
-
-    for k, v in D.items():
-        if isinstance(v, dict):
-            new_prefix = '{}{}_'.format(prefix, k)
-            print_dict(v, new_prefix)
+def export_dict(obj, prefix=''):
+    """Print dictionary as shell exports, name is JSON names split by _."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if isinstance(v, (dict, list)):
+                new_prefix = '{}{}_' \
+                             .format(prefix, k)
+                export_dict(v, new_prefix)
+            else:
+                print('export {}{}="{}"' \
+                      .format(prefix, k, v))
+    if isinstance(obj, list):
+        if isinstance(obj[0], (dict, list)):
+            for idx, v in enumerate(obj):
+                new_prefix = '{}{}_' \
+                             .format(prefix, idx)
+                export_dict(v, new_prefix)
         else:
-            print('export {}{}="{}"'.format(prefix, k, v))
+            print('export {}ARRAY=("{}")' \
+                  .format(prefix, '" "'.join(str(x) for x in obj)))
 
 if __name__ == "__main__":
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument("FILE",
+    from argparse import ArgumentParser, RawTextHelpFormatter
+    parser = ArgumentParser(description=__doc__,
+                            formatter_class=RawTextHelpFormatter)
+    parser.add_argument("file",
                         nargs="?",
                         default="-",
                         help="json file name, omit to pipe from stdin")
     args = parser.parse_args()
 
-    if args.FILE == '-':
+    if args.file == '-':
         txt = sys.stdin.read()
-        print_dict(json.loads(txt))
+        export_dict(json.loads(txt))
     else:
-        with open(args.FILE) as f:
-            print_dict(json.load(f))
+        with open(args.file) as f:
+            export_dict(json.load(f))

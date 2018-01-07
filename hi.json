@@ -6,6 +6,18 @@
 		"c": {
 			"q": "lol",
 			"r": "haha"
+		},
+		"Z": [1, 2, 3, 4]
+	},
+	"people": [
+		{
+			"name": "Tim Burnham",
+			"age": 400,
+			"likes": ["cats", "dogs named Dozer"]
+		},
+		{
+			"name": "M",
+			"age": 99
 		}
-	}
+	]
 }
