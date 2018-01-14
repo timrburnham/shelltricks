@@ -1,0 +1,6 @@
+#!/bin/bash
+# Usage:
+# dfcheck / 100
+free=$(df -g $1 | ./ncut cols=Available)
+echo $free gb free on $1
+test $free -ge $2
