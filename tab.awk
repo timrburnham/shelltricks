@@ -1,6 +1,10 @@
 #!/usr/bin/awk -f
 # Usage:
 # tab.awk w=10 file.txt
+BEGIN {
+	if(length(w) == 0)
+		w = 10
+}
 NR==1 {
 	head = sprintf("%-*s", w, substr($1,0,w))
 	for(i=2; i<=NF; i++)
