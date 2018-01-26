@@ -47,12 +47,12 @@ gs=chr(29) #group separator
 
 def print_dict(obj, prefix=''):
     if isinstance(obj, dict):
-		for k, v in obj.items():
-			if isinstance(v, (dict, list)):
-				new_prefix = '{}{}_'.format(prefix, k)
-				print_dict(v, new_prefix)
-			else:
-				print('{}{}{}{}'.format(prefix, k, rs, v))
+        for k, v in obj.items():
+            if isinstance(v, (dict, list)):
+                new_prefix = '{}{}_'.format(prefix, k)
+                print_dict(v, new_prefix)
+            else:
+                print('{}{}{}{}'.format(prefix, k, rs, v))
     if isinstance(obj, list):
         if isinstance(obj[0], (dict, list)):
             for idx, v in enumerate(obj):
