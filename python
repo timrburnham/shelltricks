@@ -2,8 +2,8 @@
 
 py=venv/bin/python
 if [[ -x $py ]]; then
-	exec $py $@ </dev/stdin
+	exec $py $@
 else
-	echo "venv not found."
-	exit 1
+	echo "venv not found, substituting default python"
+	exec python3 $@
 fi
